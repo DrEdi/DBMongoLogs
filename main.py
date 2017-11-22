@@ -1,5 +1,6 @@
 import csv
 
+from bson.son import SON
 from pymongo import MongoClient
 
 
@@ -76,10 +77,34 @@ class Connector:
         """
         return [*self.collection.find({'IP': ip}, {'URL': 1}).distinct('URL')]
 
+    def get_spent_time_stat(self):
+        """Return stats about spent time for each URL."""
+        pipeline = [
+            {"$unwind": "$URL"},
+            {"$group": {"_id": "$URL", "timeSpent": {"$sum": "$timeSpent"}}},
+            {"$sort": SON([("count", 1)])}
+        ]
+        return [*self.collection.aggregate(pipeline)]
+
+    def get_visit_count_stat(self):
+        """Return stats about visits count for each URL."""
+        pipeline = [
+            {"$unwind": "$URL"},
+            {"$group": {"_id": "$URL", "visits": {"$sum": 1}}},
+            {"$sort": SON([("count", 1)])}
+        ]
+        return [*self.collection.aggregate(pipeline)]
+
+    def get_ip_stats(self):
+        """Return stats about visits and time spent for IP."""
+        pipeline = [
+            {"$unwind": "$IP"},
+            {"$group": {"_id": "$IP", "visits": {"$sum": 1},
+                        'timeSpent': {"$sum": "$timeSpent"}}},
+            {"$sort": SON([("count", 1), ("timeSpent", 1)])}
+        ]
+        return [*self.collection.aggregate(pipeline)]
+
 
 if __name__ == '__main__':
-    a = Connector(27017, 'logs', 'data')
-    # a.save_data_from_csv('./data.csv')
-    print(a.get_ips_by_url('www.hello.com'))
-    print(a.get_urls_by_period(32, 32131231246))
-    print(a.get_url_by_ip('128.292.1.2'))
+    conn = Connector(27017, 'test', 'test_data')
