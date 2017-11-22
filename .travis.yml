@@ -21,5 +21,4 @@ before_script:
 install: pip install -r requirements.txt
 
 script:
-  coverage run --source='.' --branch -m pytest
-  coverage report
+  pytest
