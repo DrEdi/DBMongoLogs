@@ -12,8 +12,14 @@ cache:
   timeout: 43200 # 12 hours
   pip: true
 
+services:
+  - mongodb
+
+before_script:
+  - mongo mydb_test --eval 'db.createUser({user:"travis",pwd:"test",roles:["readWrite"]});'
 
 install: pip install -r requirements.txt
 
 script:
-  py.test
+  coverage run --source='.' --branch -m pytest
+  coverage report
